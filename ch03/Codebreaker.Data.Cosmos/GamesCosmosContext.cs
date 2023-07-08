@@ -23,14 +23,14 @@ public class GamesCosmosContext : DbContext, IGamesRepository
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultContainer("GamesV3");
+        modelBuilder.HasDefaultContainer("GamesV3p");
         modelBuilder.Entity<Game>().HasPartitionKey(g => g.GameId);
         var gameModel = modelBuilder.Entity<Game>();
 
-        //gameModel.Ignore(g => g.GameId);
-        //gameModel.Ignore(g => g.Moves);
-        // gameModel.HasPartitionKey(PartitionKey);
-        // gameModel.Property<string>(PartitionKey);
+        gameModel.Property<string>(PartitionKey);
+        gameModel.HasPartitionKey(PartitionKey);
+        gameModel.HasKey(GameId, PartitionKey);
+
         // gameModel.Property<string>(ETag).IsETagConcurrency();
 
         gameModel.Property(g => g.FieldValues)
@@ -63,7 +63,7 @@ public class GamesCosmosContext : DbContext, IGamesRepository
 
     public async Task AddGameAsync(Game game, CancellationToken cancellationToken = default)
     {
-        // SetPartitionKey(game);
+        SetPartitionKey(game);
         Games.Add(game);
         await SaveChangesAsync(cancellationToken);
     }
@@ -87,7 +87,7 @@ public class GamesCosmosContext : DbContext, IGamesRepository
 
     public async Task<Game?> GetGameAsync(Guid gameId, CancellationToken cancellationToken = default)
     {
-        var game = await Games.FindAsync(gameId, cancellationToken);
+        var game = await Games.FindAsync(gameId, gameId.ToString(), cancellationToken);
         return game;
     }
 
